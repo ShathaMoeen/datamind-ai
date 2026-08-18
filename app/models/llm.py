@@ -18,7 +18,7 @@ class LLMRequest(BaseModel):
     """A provider-independent request for text generation."""
 
     messages: list[LLMMessage] = Field(min_length=1)
-    temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     max_output_tokens: int = Field(default=1_000, gt=0)
 
 

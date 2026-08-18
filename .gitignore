@@ -17,6 +17,7 @@ __pycache__/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+.pip-temp/
 
 # Uploaded and generated data
 data/uploads/
