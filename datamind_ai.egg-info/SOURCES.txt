@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-app/__init__.py
-datamind_ai.egg-info/PKG-INFO
-datamind_ai.egg-info/SOURCES.txt
-datamind_ai.egg-info/dependency_links.txt
-datamind_ai.egg-info/requires.txt
-datamind_ai.egg-info/top_level.txt
-tests/test_project_setup.py
