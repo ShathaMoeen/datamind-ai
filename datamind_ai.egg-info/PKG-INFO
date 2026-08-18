@@ -1,0 +1,40 @@
+Metadata-Version: 2.4
+Name: datamind-ai
+Version: 0.1.0
+Summary: AI-powered data analysis platform combining agents, RAG, and deterministic Python tools.
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: ruff>=0.6; extra == "dev"
+
+# DataMind AI
+
+DataMind AI is an AI-powered data analysis platform that combines deterministic
+Python analysis, LLMs, specialized AI agents, visualizations, and RAG.
+
+## Project status
+
+The project is under active development and is being built incrementally.
+
+## Planned features
+
+- CSV and Excel dataset analysis
+- PDF document ingestion
+- Specialized AI agents
+- Controlled data-analysis tools
+- Interactive visualizations
+- Retrieval-Augmented Generation
+- Evidence-grounded analytical reports
+- FastAPI backend
+- Automated tests
+
+## Architecture
+
+The system will separate:
+
+- LLM reasoning from Python computation
+- Agent decisions from controlled tool execution
+- Calculated facts from AI-generated interpretations
+
+Detailed architecture documentation will be added under `docs/`.
