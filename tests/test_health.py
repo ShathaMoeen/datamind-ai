@@ -16,3 +16,4 @@ def test_health_check() -> None:
         "service": "DataMind AI",
         "version": "0.1.0",
     }
+    
