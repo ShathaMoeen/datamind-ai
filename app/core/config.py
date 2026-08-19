@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     debug: bool = False
     dataset_upload_directory: Path = Path("data/uploads")
     max_upload_size_mb: int = 10
+    document_upload_directory: Path = Path("data/documents")
+    max_document_upload_size_mb: int = 20
+    vector_store_directory: Path = Path("data/vector_store")
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    rag_chunk_size_words: int = 250
+    rag_chunk_overlap_words: int = 40
     openai_api_key: SecretStr | None = None
     openai_model: str = "gpt-5.4-nano"
 

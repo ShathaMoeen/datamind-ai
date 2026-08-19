@@ -21,6 +21,7 @@ htmlcov/
 
 # Uploaded and generated data
 data/uploads/
+data/documents/
 data/vector_store/
 
 # Editor and operating system
