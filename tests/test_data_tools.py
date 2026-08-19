@@ -5,7 +5,7 @@ from uuid import uuid4
 import pandas as pd
 
 from app.services.dataset_loader import DatasetLoader
-from app.tools.data_tools import profile_dataset
+from app.tools.data_tools import detect_outliers_iqr, profile_dataset
 
 
 def test_profile_dataset_calculates_known_quality_metrics(tmp_path) -> None:
@@ -30,3 +30,15 @@ def test_profile_dataset_calculates_known_quality_metrics(tmp_path) -> None:
     assert profile.columns[1].name == "sales"
     assert profile.columns[1].missing_count == 1
     assert profile.columns[1].missing_percentage == 25.0
+
+
+def test_iqr_tool_detects_obvious_numeric_outlier() -> None:
+    """The deterministic IQR rule should identify an extreme value."""
+
+    dataframe = pd.DataFrame({"value": [10, 11, 12, 13, 100]})
+
+    result = detect_outliers_iqr(dataframe)
+
+    assert result.method == "iqr"
+    assert result.columns[0].column == "value"
+    assert result.columns[0].outlier_count == 1
