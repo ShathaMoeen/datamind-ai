@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="DataMind AI data analysis workspace" />
+    <title>DataMind AI</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="DataMind AI home">
+        <span class="brand-mark">D</span>
+        <span>DataMind <strong>AI</strong></span>
+      </a>
+      <div class="topbar-actions">
+        <button class="language-toggle" id="language-toggle" type="button">العربية</button>
+        <div class="server-status" id="server-status" role="status">
+          <span class="status-dot"></span>
+          <span id="status-text" data-i18n="checkingApi">Checking API</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow" data-i18n="eyebrow">AI-POWERED ANALYTICS</p>
+        <h1><span data-i18n="heroLine1">Turn raw data into</span><br /><span data-i18n="heroLine2">clear decisions.</span></h1>
+        <p class="hero-copy" data-i18n="heroCopy">
+          Upload business data and supporting documents. DataMind validates,
+          profiles, and prepares them for grounded multi-agent analysis.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Data workspace">
+        <article class="panel upload-panel">
+          <div class="panel-heading">
+            <span class="step">01</span>
+            <div>
+              <h2 data-i18n="uploadDataset">Upload dataset</h2>
+              <p data-i18n="datasetSubtitle">CSV or Excel, securely validated</p>
+            </div>
+          </div>
+          <form id="dataset-form">
+            <label class="dropzone" for="dataset-file">
+              <span class="upload-icon">↥</span>
+              <strong id="dataset-label" data-i18n="chooseDataset">Choose a dataset</strong>
+              <small data-i18n="datasetTypes">CSV or XLSX</small>
+              <input id="dataset-file" type="file" accept=".csv,.xlsx" required />
+            </label>
+            <button type="submit" data-i18n="uploadAndProfile">Upload and profile</button>
+          </form>
+          <div class="message" id="dataset-message" aria-live="polite"></div>
+        </article>
+
+        <article class="panel upload-panel">
+          <div class="panel-heading">
+            <span class="step">02</span>
+            <div>
+              <h2 data-i18n="addEvidence">Add evidence</h2>
+              <p data-i18n="evidenceSubtitle">PDF reports for grounded answers</p>
+            </div>
+          </div>
+          <form id="document-form">
+            <label class="dropzone" for="document-file">
+              <span class="upload-icon">↥</span>
+              <strong id="document-label" data-i18n="chooseDocument">Choose a document</strong>
+              <small data-i18n="documentType">Text-based PDF</small>
+              <input id="document-file" type="file" accept=".pdf" required />
+            </label>
+            <button type="submit" class="secondary" data-i18n="uploadDocument">Upload document</button>
+          </form>
+          <div class="message" id="document-message" aria-live="polite"></div>
+        </article>
+
+        <article class="panel profile-panel">
+          <div class="panel-heading">
+            <span class="step">03</span>
+            <div>
+              <h2 data-i18n="dataProfile">Data profile</h2>
+              <p data-i18n="profileSubtitle">Deterministic quality checks</p>
+            </div>
+          </div>
+          <div class="empty-state" id="profile-empty" data-i18n="profileEmpty">
+            Upload a dataset to see its structure and quality metrics.
+          </div>
+          <div id="profile-results" class="profile-results" hidden></div>
+        </article>
+
+        <article class="panel question-panel">
+          <div class="panel-heading">
+            <span class="step">04</span>
+            <div>
+              <h2 data-i18n="askDataMind">Ask DataMind</h2>
+              <p data-i18n="questionSubtitle">Multi-agent analysis workspace</p>
+            </div>
+          </div>
+          <label for="question" data-i18n="questionLabel">Your analytical question</label>
+          <textarea id="question" rows="4" data-i18n-placeholder="questionPlaceholder" placeholder="What are the most important trends in this dataset?"></textarea>
+          <button type="button" disabled data-i18n-title="analysisDisabled" title="Analysis API connection is the next step">
+            <span data-i18n="runAnalysis">Run analysis · coming next</span>
+          </button>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
