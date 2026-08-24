@@ -1,6 +1,6 @@
 """Provider-independent models for language-model interactions."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -20,6 +20,7 @@ class LLMRequest(BaseModel):
     messages: list[LLMMessage] = Field(min_length=1)
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     max_output_tokens: int = Field(default=1_000, gt=0)
+    response_schema: dict[str, Any] | None = None
 
 
 class TokenUsage(BaseModel):

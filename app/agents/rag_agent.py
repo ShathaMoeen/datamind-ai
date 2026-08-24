@@ -137,7 +137,11 @@ class RAGAgent:
                         "Return JSON only with status, answer, citations, limitations. "
                         "Each citation must contain an exact retrieved chunk_id, source, "
                         "and page_number. If evidence is insufficient, use status "
-                        "insufficient_evidence and return no citations. Do not guess."
+                        "insufficient_evidence and return no citations. Do not guess. "
+                        "If the question is Arabic, answer in clear Modern Standard "
+                        "Arabic and proofread spelling, grammar, agreement, and "
+                        "punctuation before returning JSON. Preserve source names, "
+                        "identifiers, and technical terms exactly."
                     ),
                 ),
                 LLMMessage(
@@ -150,6 +154,7 @@ class RAGAgent:
             ],
             temperature=0.0,
             max_output_tokens=1_000,
+            response_schema=RAGGeneratedAnswer.model_json_schema(),
         )
 
     def _validate_citations(

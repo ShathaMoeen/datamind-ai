@@ -56,6 +56,7 @@ class OrchestratorAgent:
             ],
             temperature=0.0,
             max_output_tokens=300,
+            response_schema=OrchestrationPlan.model_json_schema(),
         )
         response = await self._llm_client.generate(request)
 

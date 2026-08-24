@@ -10,6 +10,16 @@ from app.models.report_agent import ReportFact
 from app.services.fake_llm_client import FakeLLMClient
 
 
+class SequenceLLMClient:
+    def __init__(self, contents: list[str]) -> None:
+        self._contents = iter(contents)
+        self.requests = []
+
+    async def generate(self, request):
+        self.requests.append(request)
+        return LLMResponse(content=next(self._contents), model="fake-model")
+
+
 def _facts() -> list[ReportFact]:
     return [
         ReportFact(
@@ -84,3 +94,37 @@ def test_report_agent_requires_unique_source_facts() -> None:
 
     with pytest.raises(ReportValidationError, match="unique"):
         asyncio.run(ReportAgent(llm_client).generate(duplicate_facts))
+
+
+def test_report_agent_requests_selected_output_language() -> None:
+    llm_client = FakeLLMClient(
+        LLMResponse(
+            content=(
+                '{"executive_summary":"ملخص", "findings":[],'
+                '"interpretations":[],"recommendations":[],"limitations":[]}'
+            ),
+            model="fake-model",
+        )
+    )
+
+    asyncio.run(ReportAgent(llm_client).generate(_facts(), language="ar"))
+
+    prompt = llm_client.requests[0].messages[0].content
+    assert "in Arabic" in prompt
+    assert "Modern Standard Arabic" in prompt
+    assert "proofread every Arabic sentence" in prompt
+    assert "column names" in prompt
+
+
+def test_report_agent_repairs_one_invalid_local_model_response() -> None:
+    valid_report = (
+        '{"executive_summary":"Summary","findings":[],'
+        '"interpretations":[],"recommendations":[],"limitations":[]}'
+    )
+    llm_client = SequenceLLMClient(["{}", valid_report])
+
+    result = asyncio.run(ReportAgent(llm_client).generate(_facts()))
+
+    assert result.report.executive_summary == "Summary"
+    assert len(llm_client.requests) == 2
+    assert "Validation errors" in llm_client.requests[1].messages[-1].content

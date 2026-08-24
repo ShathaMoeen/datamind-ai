@@ -84,7 +84,9 @@ class FakeReportAgent:
     def __init__(self) -> None:
         self.received_facts: list[Any] = []
 
-    async def generate(self, facts: list[Any]) -> ReportAgentResult:
+    async def generate(
+        self, facts: list[Any], language: str = "en"
+    ) -> ReportAgentResult:
         self.received_facts = facts
         return ReportAgentResult(
             report=GeneratedReport(
