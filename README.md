@@ -5,7 +5,7 @@ deterministic Python tools with a locally hosted or cloud LLM to inspect
 datasets, calculate statistics, create interactive charts, retrieve evidence
 from PDF documents, and produce grounded analytical reports.
 
-![DataMind AI analysis dashboard](docs/assets/datamind-dashboard.png)
+![DataMind AI analysis dashboard](docs/assets/datamind-dashboard-v2.png)
 
 ## Highlights
 
