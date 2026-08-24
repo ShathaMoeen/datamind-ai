@@ -29,3 +29,12 @@ def test_frontend_javascript_contains_arabic_translation_and_rtl_support() -> No
     assert response.status_code == 200
     assert "رفع مجموعة بيانات" in response.text
     assert 'document.documentElement.dir = language === "ar" ? "rtl" : "ltr"' in response.text
+
+
+def test_frontend_connects_analysis_button_to_api() -> None:
+    html = client.get("/")
+    javascript = client.get("/static/app.js")
+
+    assert 'id="analysis-button"' in html.text
+    assert 'id="analysis-button" type="button"' in html.text
+    assert "`${api}/analysis/run`" in javascript.text

@@ -24,32 +24,32 @@ class ReportFact(BaseModel):
 class ReportFinding(BaseModel):
     """A factual finding that must reference one or more supplied facts."""
 
-    statement: str = Field(min_length=1)
+    statement: str = Field(min_length=1, max_length=400)
     fact_ids: list[str] = Field(min_length=1)
 
 
 class ReportInterpretation(BaseModel):
     """An explicitly labelled LLM interpretation supported by known facts."""
 
-    statement: str = Field(min_length=1)
+    statement: str = Field(min_length=1, max_length=400)
     supporting_fact_ids: list[str] = Field(min_length=1)
 
 
 class ReportRecommendation(BaseModel):
     """An advisory action, kept separate from calculated facts."""
 
-    action: str = Field(min_length=1)
+    action: str = Field(min_length=1, max_length=400)
     supporting_fact_ids: list[str] = Field(default_factory=list)
 
 
 class GeneratedReport(BaseModel):
     """Structured report content generated from an allowlisted fact set."""
 
-    executive_summary: str = Field(min_length=1)
-    findings: list[ReportFinding]
-    interpretations: list[ReportInterpretation]
-    recommendations: list[ReportRecommendation]
-    limitations: list[str]
+    executive_summary: str = Field(min_length=1, max_length=800)
+    findings: list[ReportFinding] = Field(max_length=5)
+    interpretations: list[ReportInterpretation] = Field(max_length=3)
+    recommendations: list[ReportRecommendation] = Field(max_length=3)
+    limitations: list[str] = Field(max_length=3)
 
 
 class ReportTraceEvent(BaseModel):

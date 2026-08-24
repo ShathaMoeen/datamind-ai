@@ -44,11 +44,18 @@ def test_analysis_agent_executes_typed_group_comparison(tmp_path) -> None:
         {"group": "West", "value": 25.0},
     ]
     assert len(result.trace) == 2
+    planner_prompt = llm_client.requests[0].messages[0].content
+    assert '"name": "region"' in planner_prompt
+    assert '"name": "sales"' in planner_prompt
 
 
 def test_analysis_agent_rejects_untyped_python_plan(tmp_path) -> None:
     """An arbitrary-code plan must fail schema validation before execution."""
 
+    dataset_id = str(uuid4())
+    pd.DataFrame({"sales": [10]}).to_csv(
+        tmp_path / f"{dataset_id}.csv", index=False
+    )
     llm_client = FakeLLMClient(
         LLMResponse(
             content=(
@@ -64,4 +71,31 @@ def test_analysis_agent_rejects_untyped_python_plan(tmp_path) -> None:
     )
 
     with pytest.raises(AnalysisAgentPlanningError):
-        asyncio.run(agent.analyze(str(uuid4()), "Run Python."))
+        asyncio.run(agent.analyze(dataset_id, "Run Python."))
+
+
+def test_analysis_agent_removes_hallucinated_statistic_column(tmp_path) -> None:
+    """Statistics such as mean must not be treated as dataset columns."""
+
+    dataset_id = str(uuid4())
+    pd.DataFrame({"monthly_income": [7000, 9000]}).to_csv(
+        tmp_path / f"{dataset_id}.csv", index=False
+    )
+    llm_client = FakeLLMClient(
+        LLMResponse(
+            content=(
+                '{"tool_calls":[{"tool":"describe_numeric","columns":'
+                '["monthly_income","mean"]}],"reason":"Summarize income."}'
+            ),
+            model="fake-model",
+        )
+    )
+    agent = AnalysisAgent(
+        llm_client=llm_client,
+        registry=AnalysisToolRegistry(DatasetLoader(tmp_path)),
+    )
+
+    result = asyncio.run(agent.analyze(dataset_id, "Calculate mean income."))
+
+    assert result.plan.tool_calls[0].columns == ["monthly_income"]
+    assert result.executions[0].output["columns"][0]["mean"] == 8000.0

@@ -13,6 +13,7 @@ __pycache__/
 
 # Tests and tools
 .pytest_cache/
+.pytest-tmp*/
 .coverage
 htmlcov/
 .mypy_cache/

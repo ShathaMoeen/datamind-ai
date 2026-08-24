@@ -13,7 +13,12 @@ const translations = {
     profileEmpty: "Upload a dataset to see its structure and quality metrics.",
     askDataMind: "Ask DataMind", questionSubtitle: "Multi-agent analysis workspace",
     questionLabel: "Your analytical question", questionPlaceholder: "What are the most important trends in this dataset?",
-    analysisDisabled: "Analysis API connection is the next step", runAnalysis: "Run analysis · coming next",
+    runAnalysis: "Run analysis", runningAnalysis: "Agents are analyzing your request…",
+    analysisReport: "Analysis report", reportSubtitle: "Grounded findings and recommendations",
+    summary: "Executive summary", findings: "Verified findings", interpretations: "Interpretations",
+    recommendations: "Recommendations", limitations: "Limitations",
+    uploadFirst: "Upload a dataset or document first.", questionRequired: "Enter an analytical question.",
+    orchestrator: "Orchestrator", reportAgent: "Report Agent",
     apiOnline: "API online", apiUnavailable: "API unavailable", uploadingProfile: "Uploading and profiling…",
     datasetReady: "is ready.", uploadingDocument: "Uploading document…", documentReady: "is ready for indexing.",
     rows: "Rows", columns: "Columns", duplicates: "Duplicate rows", missingColumns: "Columns with missing data",
@@ -30,7 +35,12 @@ const translations = {
     profileEmpty: "ارفع مجموعة بيانات لعرض بنيتها ومقاييس جودتها.",
     askDataMind: "اسأل DataMind", questionSubtitle: "مساحة تحليل متعددة الوكلاء",
     questionLabel: "سؤالك التحليلي", questionPlaceholder: "ما أهم الاتجاهات في مجموعة البيانات؟",
-    analysisDisabled: "سيتم ربط واجهة التحليل البرمجية في الخطوة التالية", runAnalysis: "تشغيل التحليل · قريبًا",
+    runAnalysis: "تشغيل التحليل", runningAnalysis: "الوكلاء يحللون طلبك الآن…",
+    analysisReport: "تقرير التحليل", reportSubtitle: "نتائج وتوصيات موثقة",
+    summary: "الملخص التنفيذي", findings: "النتائج المؤكدة", interpretations: "التفسيرات",
+    recommendations: "التوصيات", limitations: "القيود",
+    uploadFirst: "ارفع مجموعة بيانات أو مستندًا أولًا.", questionRequired: "اكتب سؤالًا تحليليًا.",
+    orchestrator: "المنسق", reportAgent: "وكيل التقرير",
     apiOnline: "الواجهة البرمجية متصلة", apiUnavailable: "الواجهة البرمجية غير متاحة", uploadingProfile: "جارٍ الرفع وتحليل الجودة…",
     datasetReady: "جاهز للتحليل.", uploadingDocument: "جارٍ رفع المستند…", documentReady: "جاهز للفهرسة.",
     rows: "الصفوف", columns: "الأعمدة", duplicates: "الصفوف المكررة", missingColumns: "أعمدة تحتوي قيمًا مفقودة",
@@ -38,6 +48,8 @@ const translations = {
 };
 
 let language = localStorage.getItem("datamind-language") || "en";
+let datasetId = null;
+const documentIds = [];
 const t = (key) => translations[language][key];
 
 const applyLanguage = () => {
@@ -99,6 +111,7 @@ document.getElementById("dataset-form").addEventListener("submit", async (event)
   try {
     const uploaded = await requestJson(`${api}/datasets/upload`, { method: "POST", body: data });
     const profile = await requestJson(`${api}/datasets/${uploaded.dataset_id}/profile`);
+    datasetId = uploaded.dataset_id;
     renderProfile(profile);
     showMessage(message, `${uploaded.original_filename} ${t("datasetReady")}`);
   } catch (error) {
@@ -115,6 +128,7 @@ document.getElementById("document-form").addEventListener("submit", async (event
   showMessage(message, t("uploadingDocument"));
   try {
     const uploaded = await requestJson(`${api}/documents/upload`, { method: "POST", body: data });
+    documentIds.push(uploaded.document_id);
     showMessage(message, `${uploaded.original_filename} ${t("documentReady")}`);
   } catch (error) {
     showMessage(message, error.message, true);
@@ -133,6 +147,117 @@ const checkHealth = async () => {
     statusText.textContent = t("apiUnavailable");
   }
 };
+
+const addReportSection = (container, title, items) => {
+  if (!items.length) return;
+  const section = document.createElement("section");
+  section.className = "report-section";
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  section.appendChild(heading);
+  const list = document.createElement("ul");
+  items.forEach((item) => {
+    const listItem = document.createElement("li");
+    listItem.textContent = item;
+    list.appendChild(listItem);
+  });
+  section.appendChild(list);
+  container.appendChild(section);
+};
+
+const renderReport = (result) => {
+  const report = result.final_report.report;
+  const container = document.getElementById("report-content");
+  container.replaceChildren();
+  const flow = document.getElementById("workflow-flow");
+  flow.replaceChildren();
+  const agentLabels = {
+    orchestrator: t("orchestrator"), data_agent: language === "ar" ? "وكيل البيانات" : "Data Agent",
+    analysis_agent: language === "ar" ? "وكيل التحليل" : "Analysis Agent",
+    visualization_agent: language === "ar" ? "وكيل التصور" : "Visualization Agent",
+    rag_agent: language === "ar" ? "وكيل المستندات" : "RAG Agent", report_agent: t("reportAgent"),
+  };
+  result.trace.forEach((event, index) => {
+    if (!event.agent) return;
+    if (index) {
+      const arrow = document.createElement("span");
+      arrow.className = "workflow-arrow";
+      arrow.textContent = language === "ar" ? "←" : "→";
+      flow.appendChild(arrow);
+    }
+    const node = document.createElement("span");
+    node.className = "workflow-node";
+    node.textContent = `✓ ${agentLabels[event.agent] || event.agent}`;
+    flow.appendChild(node);
+  });
+  const kpis = document.getElementById("report-kpis");
+  kpis.replaceChildren();
+  result.final_report.source_facts
+    .filter((fact) => typeof fact.value === "number")
+    .slice(0, 4)
+    .forEach((fact) => {
+      const card = document.createElement("div");
+      card.className = "report-kpi";
+      const label = document.createElement("span");
+      label.textContent = fact.statement.replace(/:\s*[\d.]+\.?$/, "");
+      const value = document.createElement("strong");
+      value.textContent = new Intl.NumberFormat(language).format(fact.value);
+      card.append(label, value);
+      kpis.appendChild(card);
+    });
+  const visualization = result.specialist_results.find(
+    (item) => item.selected_agent === "visualization_agent"
+  );
+  const chartCard = document.getElementById("chart-card");
+  if (visualization && window.Plotly) {
+    chartCard.hidden = false;
+    window.Plotly.newPlot(
+      "analysis-chart",
+      visualization.figure.data,
+      {
+        ...visualization.figure.layout,
+        paper_bgcolor: "#0e100f",
+        plot_bgcolor: "#0e100f",
+        font: { color: "#e8e7e2" },
+        margin: { t: 60, r: 30, b: 60, l: 65 },
+      },
+      { responsive: true, displaylogo: false }
+    );
+  } else {
+    chartCard.hidden = true;
+  }
+  addReportSection(container, t("summary"), [report.executive_summary]);
+  addReportSection(container, t("findings"), report.findings.map((item) => item.statement));
+  addReportSection(container, t("interpretations"), report.interpretations.map((item) => item.statement));
+  addReportSection(container, t("recommendations"), report.recommendations.map((item) => item.action));
+  addReportSection(container, t("limitations"), report.limitations);
+  document.getElementById("analysis-results").hidden = false;
+};
+
+document.getElementById("analysis-button").addEventListener("click", async () => {
+  const question = document.getElementById("question").value.trim();
+  const message = document.getElementById("analysis-message");
+  if (!question) return showMessage(message, t("questionRequired"), true);
+  if (!datasetId && !documentIds.length) return showMessage(message, t("uploadFirst"), true);
+  showMessage(message, t("runningAnalysis"));
+  try {
+    const result = await requestJson(`${api}/analysis/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question,
+        dataset_id: datasetId,
+        document_ids: documentIds,
+        language,
+        dashboard_mode: true,
+      }),
+    });
+    renderReport(result);
+    showMessage(message, "");
+  } catch (error) {
+    showMessage(message, error.message, true);
+  }
+});
 
 updateFileLabel("dataset-file", "dataset-label");
 updateFileLabel("document-file", "document-label");

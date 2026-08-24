@@ -7,6 +7,7 @@
     <title>DataMind AI</title>
     <link rel="stylesheet" href="/static/styles.css" />
     <script src="/static/app.js" defer></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" defer></script>
   </head>
   <body>
     <header class="topbar">
@@ -98,9 +99,26 @@
           </div>
           <label for="question" data-i18n="questionLabel">Your analytical question</label>
           <textarea id="question" rows="4" data-i18n-placeholder="questionPlaceholder" placeholder="What are the most important trends in this dataset?"></textarea>
-          <button type="button" disabled data-i18n-title="analysisDisabled" title="Analysis API connection is the next step">
-            <span data-i18n="runAnalysis">Run analysis · coming next</span>
+          <button id="analysis-button" type="button">
+            <span data-i18n="runAnalysis">Run analysis</span>
           </button>
+          <div class="message" id="analysis-message" aria-live="polite"></div>
+        </article>
+
+        <article class="panel results-panel" id="analysis-results" hidden>
+          <div class="panel-heading">
+            <span class="step">05</span>
+            <div>
+              <h2 data-i18n="analysisReport">Analysis report</h2>
+              <p data-i18n="reportSubtitle">Grounded findings and recommendations</p>
+            </div>
+          </div>
+          <div class="workflow-flow" id="workflow-flow"></div>
+          <div class="report-kpis" id="report-kpis"></div>
+          <div class="chart-card" id="chart-card" hidden>
+            <div id="analysis-chart"></div>
+          </div>
+          <div id="report-content"></div>
         </article>
       </section>
     </main>
