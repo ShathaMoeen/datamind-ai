@@ -43,6 +43,40 @@ def test_bar_chart_aggregates_categories() -> None:
     y_values = _decode_plotly_array(figure["data"][0]["y"])
     values = dict(zip(figure["data"][0]["x"], y_values, strict=True))
     assert values == {"East": 7, "West": 25}
+    colors = dict(
+        zip(
+            figure["data"][0]["x"],
+            figure["data"][0]["marker"]["color"],
+            strict=True,
+        )
+    )
+    assert colors == {"East": "#FF6B6B", "West": "#A7FF4F"}
+
+
+def test_expense_bar_chart_prefers_lower_result() -> None:
+    """Lower expenses should be green while higher expenses should be red."""
+
+    dataframe = pd.DataFrame(
+        {"region": ["Riyadh", "Jeddah"], "monthly_expenses": [9000, 5000]}
+    )
+    spec = BarChartSpec(
+        chart_type="bar",
+        x="region",
+        y="monthly_expenses",
+        aggregation="mean",
+        title="Expenses by region",
+    )
+
+    figure = create_chart(dataframe, spec)
+
+    colors = dict(
+        zip(
+            figure["data"][0]["x"],
+            figure["data"][0]["marker"]["color"],
+            strict=True,
+        )
+    )
+    assert colors == {"Jeddah": "#A7FF4F", "Riyadh": "#FF6B6B"}
 
 
 def test_heatmap_contains_numeric_correlation_matrix() -> None:

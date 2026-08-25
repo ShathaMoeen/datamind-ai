@@ -54,6 +54,25 @@ class ReportAgent:
                 ) from second_error
 
         self._validate_references(report, facts)
+        try:
+            self._validate_categorical_labels(report, facts)
+        except ReportValidationError as grounding_error:
+            grounding_request = self._build_grounding_repair_request(
+                request=request,
+                invalid_content=report.model_dump_json(),
+                validation_error=str(grounding_error),
+            )
+            grounding_response = await self._llm_client.generate(grounding_request)
+            try:
+                report = GeneratedReport.model_validate_json(
+                    grounding_response.content
+                )
+            except ValidationError as error:
+                raise ReportValidationError(
+                    "The Report Agent could not repair categorical labels."
+                ) from error
+            self._validate_references(report, facts)
+            self._validate_categorical_labels(report, facts)
         return ReportAgentResult(
             report=report,
             source_facts=facts,
@@ -125,6 +144,13 @@ class ReportAgent:
                         "limitations. Never reinterpret a column's unique_count as a "
                         "count of records or a data type. Prioritize concrete numeric "
                         "metrics, keep prose short, and do not repeat the same number."
+                        " Categorical labels are mandatory: when facts contain a "
+                        "region, product, category, customer segment, or other group "
+                        "label, copy its exact name into the executive summary and "
+                        "every related finding or interpretation. Never replace a "
+                        "known label with vague phrases such as 'a certain region', "
+                        "'a certain product', 'منطقة معينة', 'منتج معين', or "
+                        "'فئة معينة'. Compare the named groups explicitly."
                     ),
                 ),
                 LLMMessage(
@@ -171,6 +197,33 @@ class ReportAgent:
         )
 
     @staticmethod
+    def _build_grounding_repair_request(
+        request: LLMRequest,
+        invalid_content: str,
+        validation_error: str,
+    ) -> LLMRequest:
+        """Repair vague categorical language without changing trusted facts."""
+
+        return LLMRequest(
+            messages=[
+                *request.messages,
+                LLMMessage(role="assistant", content=invalid_content),
+                LLMMessage(
+                    role="user",
+                    content=(
+                        "Rewrite the JSON report so every categorical comparison "
+                        "uses the exact group labels supplied in the trusted facts. "
+                        "Do not use vague substitutes. Return JSON only. Error: "
+                        + validation_error
+                    ),
+                ),
+            ],
+            temperature=0.0,
+            max_output_tokens=request.max_output_tokens,
+            response_schema=request.response_schema,
+        )
+
+    @staticmethod
     def _validate_references(
         report: GeneratedReport,
         facts: list[ReportFact],
@@ -189,3 +242,46 @@ class ReportAgent:
             raise ReportValidationError(
                 "The report referenced unknown facts: " + ", ".join(unknown_ids)
             )
+
+    @staticmethod
+    def _validate_categorical_labels(
+        report: GeneratedReport,
+        facts: list[ReportFact],
+    ) -> None:
+        """Require exact dataset labels in categorical report statements."""
+
+        facts_by_id = {fact.fact_id: fact for fact in facts}
+
+        def labels_for(fact_ids: list[str]) -> list[str]:
+            labels = []
+            for fact_id in fact_ids:
+                value = facts_by_id[fact_id].value
+                if isinstance(value, dict) and value.get("group") is not None:
+                    labels.append(str(value["group"]))
+            return labels
+
+        all_labels = labels_for(list(facts_by_id))
+        if all_labels and not any(
+            label.casefold() in report.executive_summary.casefold()
+            for label in all_labels
+        ):
+            raise ReportValidationError(
+                "Executive summary omitted all exact categorical labels: "
+                + ", ".join(all_labels)
+            )
+
+        referenced_sections = [
+            (finding.statement, finding.fact_ids) for finding in report.findings
+        ] + [
+            (item.statement, item.supporting_fact_ids)
+            for item in report.interpretations
+        ]
+        for statement, fact_ids in referenced_sections:
+            labels = labels_for(fact_ids)
+            if labels and not any(
+                label.casefold() in statement.casefold() for label in labels
+            ):
+                raise ReportValidationError(
+                    "Report statement omitted its exact categorical label: "
+                    + ", ".join(labels)
+                )

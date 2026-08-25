@@ -20,6 +20,84 @@ class VisualizationInputError(ValueError):
     """Raised when selected columns cannot support a requested chart."""
 
 
+POSITIVE_COLOR = "#A7FF4F"
+NEGATIVE_COLOR = "#FF6B6B"
+NEUTRAL_COLOR = "#6574F7"
+SERIES_COLORS = ["#A7FF4F", "#6574F7", "#F7C948", "#B76EFF", "#35C6E8"]
+LOWER_IS_BETTER_TERMS = (
+    "expense",
+    "cost",
+    "debt",
+    "loss",
+    "risk",
+    "stress",
+    "error",
+    "defect",
+    "churn",
+)
+
+
+def _higher_is_better(metric: str) -> bool:
+    """Apply a transparent naming heuristic for semantic result colors."""
+
+    normalized = metric.casefold()
+    return not any(term in normalized for term in LOWER_IS_BETTER_TERMS)
+
+
+def _result_colors(values: list[float], metric: str) -> list[str]:
+    """Highlight the preferred and least-preferred values deterministically."""
+
+    if not values or min(values) == max(values):
+        return [NEUTRAL_COLOR] * len(values)
+    maximum = max(values)
+    minimum = min(values)
+    preferred = maximum if _higher_is_better(metric) else minimum
+    least_preferred = minimum if _higher_is_better(metric) else maximum
+    return [
+        POSITIVE_COLOR
+        if value == preferred
+        else NEGATIVE_COLOR
+        if value == least_preferred
+        else NEUTRAL_COLOR
+        for value in values
+    ]
+
+
+def _apply_result_colors(figure, spec: ChartSpec) -> None:
+    """Apply accessible, result-aware colors to the generated Plotly figure."""
+
+    if isinstance(spec, BarChartSpec) and spec.color is None:
+        for trace in figure.data:
+            values = [float(value) for value in trace.y]
+            trace.marker.color = _result_colors(values, spec.y)
+        preferred_label = "Higher" if _higher_is_better(spec.y) else "Lower"
+        figure.add_annotation(
+            text=(
+                f"{preferred_label} is preferred: green | "
+                "الأفضل أخضر، والأقل تفضيلًا أحمر"
+            ),
+            x=1,
+            y=1.12,
+            xref="paper",
+            yref="paper",
+            xanchor="right",
+            showarrow=False,
+            font={"size": 11},
+        )
+    elif isinstance(spec, LineChartSpec):
+        for index, trace in enumerate(figure.data):
+            trace.line.color = SERIES_COLORS[index % len(SERIES_COLORS)]
+            trace.marker.color = SERIES_COLORS[index % len(SERIES_COLORS)]
+    elif isinstance(spec, ScatterChartSpec) and spec.color is None:
+        for trace in figure.data:
+            trace.marker.color = trace.y
+            trace.marker.colorscale = "RdYlGn"
+            trace.marker.showscale = True
+    elif not isinstance(spec, CorrelationHeatmapSpec):
+        for index, trace in enumerate(figure.data):
+            trace.marker.color = SERIES_COLORS[index % len(SERIES_COLORS)]
+
+
 def _require_columns(dataframe: pd.DataFrame, columns: list[str | None]) -> None:
     requested = [column for column in columns if column is not None]
     missing = [column for column in requested if column not in dataframe.columns]
@@ -150,5 +228,6 @@ def create_chart(dataframe: pd.DataFrame, spec: ChartSpec) -> dict:
     else:
         raise TypeError("Unsupported validated chart specification.")
 
+    _apply_result_colors(figure, spec)
     figure.update_layout(template="plotly_white")
     return json.loads(figure.to_json())

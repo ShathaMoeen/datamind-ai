@@ -128,3 +128,40 @@ def test_report_agent_repairs_one_invalid_local_model_response() -> None:
     assert result.report.executive_summary == "Summary"
     assert len(llm_client.requests) == 2
     assert "Validation errors" in llm_client.requests[1].messages[-1].content
+
+
+def test_report_agent_repairs_vague_categorical_language() -> None:
+    facts = [
+        ReportFact(
+            fact_id="analysis-region-1",
+            source_agent="analysis_agent",
+            statement="mean of monthly_savings for region 'Riyadh': 2450.0.",
+            value={
+                "group_by": "region",
+                "group": "Riyadh",
+                "metric": "monthly_savings",
+                "aggregation": "mean",
+                "value": 2450.0,
+            },
+        )
+    ]
+    vague = (
+        '{"executive_summary":"A certain region performed best.",'
+        '"findings":[{"statement":"A certain region averaged 2450.",'
+        '"fact_ids":["analysis-region-1"]}],"interpretations":[],'
+        '"recommendations":[],"limitations":[]}'
+    )
+    repaired = (
+        '{"executive_summary":"Riyadh performed best.",'
+        '"findings":[{"statement":"Riyadh averaged 2450 in monthly savings.",'
+        '"fact_ids":["analysis-region-1"]}],"interpretations":[],'
+        '"recommendations":[],"limitations":[]}'
+    )
+    llm_client = SequenceLLMClient([vague, repaired])
+
+    result = asyncio.run(ReportAgent(llm_client).generate(facts))
+
+    assert "Riyadh" in result.report.executive_summary
+    assert "Riyadh" in result.report.findings[0].statement
+    assert len(llm_client.requests) == 2
+    assert "exact group labels" in llm_client.requests[1].messages[-1].content

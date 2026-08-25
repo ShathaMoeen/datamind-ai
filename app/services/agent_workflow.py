@@ -244,6 +244,8 @@ class AgentWorkflow:
                             )
             elif execution.tool.value == "group_comparison":
                 metric = str(output.get("metric", "value"))
+                group_by = str(output.get("group_by", "group"))
+                aggregation = str(output.get("aggregation", "value"))
                 groups = sorted(
                     output.get("groups", []),
                     key=lambda item: item.get("value") or 0,
@@ -253,6 +255,7 @@ class AgentWorkflow:
                     value = group.get("value")
                     if value is not None:
                         rounded = round(float(value), 2)
+                        group_label = str(group.get("group"))
                         facts.append(
                             ReportFact(
                                 fact_id=(
@@ -260,9 +263,16 @@ class AgentWorkflow:
                                 ),
                                 source_agent="analysis_agent",
                                 statement=(
-                                    f"{group.get('group')} {metric}: {rounded}."
+                                    f"{aggregation} of {metric} for {group_by} "
+                                    f"'{group_label}': {rounded}."
                                 ),
-                                value=rounded,
+                                value={
+                                    "group_by": group_by,
+                                    "group": group_label,
+                                    "metric": metric,
+                                    "aggregation": aggregation,
+                                    "value": rounded,
+                                },
                             )
                         )
             else:
