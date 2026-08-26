@@ -23,35 +23,95 @@ from PDF documents, and produce grounded analytical reports.
 ## Architecture
 
 ```mermaid
-flowchart LR
-    UI[Bilingual Web UI] --> API[FastAPI API]
-    API --> O[Orchestrator]
+flowchart TB
 
-    LLM[Ollama / OpenAI] -. planning and generation .-> O
+    %% ───────────── Interface ─────────────
+    subgraph INTERFACE["Application Layer"]
+        direction LR
+        UI["Bilingual Web UI"] --> API["FastAPI API"]
+        API --> ORCH["Orchestrator"]
+    end
 
-    O --> D[Data Agent]
-    O --> A[Analysis Agent]
-    O --> V[Visualization Agent]
-    O --> R[RAG Agent]
+    %% ───────────── Agents ─────────────
+    subgraph AGENTS["Specialist Agent Layer"]
+        direction LR
+        DATA["Data Agent"]
+        ANALYSIS["Analysis Agent"]
+        VIS["Visualization Agent"]
+        RAG["RAG Agent"]
+    end
 
-    D --> T[Validated Python Tools]
-    A --> T
-    V --> P[Plotly]
-    R <--> C[(ChromaDB)]
+    ORCH --> DATA
+    ORCH --> ANALYSIS
+    ORCH --> VIS
+    ORCH --> RAG
 
-    T --> N[Fact Normalizer and Validator]
-    P --> N
-    C --> N
+    %% ───────────── Controlled tools ─────────────
+    subgraph TOOLS["Controlled Execution Layer"]
+        direction LR
+        PYTHON["Validated Python Tools"]
+        PLOTLY["Plotly"]
+        RETRIEVER["Retriever"]
+    end
 
-    N --> F[Trusted Facts]
-    F --> RP[Report Agent]
+    DATA --> PYTHON
+    ANALYSIS --> PYTHON
+    VIS --> PLOTLY
+    RAG --> RETRIEVER
 
-    LLM -. report generation .-> RP
-    RP --> UI
+    %% ───────────── PDF ingestion and RAG ─────────────
+    subgraph KNOWLEDGE["Knowledge and RAG Layer"]
+        direction LR
+        PDF["PDF Documents"]
+        LOADER["Document Loader"]
+        CHUNKS["Chunking"]
+        EMBEDDINGS["Embeddings"]
+        CHROMA[("ChromaDB")]
+
+        PDF --> LOADER
+        LOADER --> CHUNKS
+        CHUNKS --> EMBEDDINGS
+        EMBEDDINGS --> CHROMA
+    end
+
+    RETRIEVER <--> CHROMA
+
+    %% ───────────── Validation and reporting ─────────────
+    subgraph REPORTING["Validation and Reporting Layer"]
+        direction LR
+        VALIDATION["Fact Normalization<br/>and Evidence Validation"]
+        FACTS["Trusted Facts<br/>and Evidence"]
+        REPORT["Report Agent"]
+
+        VALIDATION --> FACTS
+        FACTS --> REPORT
+    end
+
+    PYTHON --> VALIDATION
+    PLOTLY --> VALIDATION
+    RETRIEVER --> VALIDATION
+
+    REPORT --> API
+    API --> UI
+
+    %% ───────────── LLM providers ─────────────
+    subgraph AI["LLM Service"]
+        direction LR
+        OLLAMA["Ollama"]
+        OPENAI["OpenAI"]
+        LLM["Provider-independent<br/>LLM Client"]
+
+        OLLAMA --> LLM
+        OPENAI --> LLM
+    end
+
+    ORCH -. "planning and routing" .-> LLM
+    LLM -. "structured decisions" .-> ORCH
+    REPORT -. "grounded report generation" .-> LLM
+    LLM -. "structured report" .-> REPORT
 ```
 
-The LLM plans tasks, while deterministic Python code performs calculations.  
-Tool calls and structured responses are validated before report generation.
+The orchestrator coordinates specialized agents while validated Python tools perform deterministic calculations. PDF documents are processed, embedded, and stored in ChromaDB for evidence retrieval. All outputs pass through normalization and evidence validation before the report is generated.
 
 ## Technology stack
 
