@@ -24,26 +24,34 @@ from PDF documents, and produce grounded analytical reports.
 
 ```mermaid
 flowchart LR
-    UI[Bilingual web UI] --> API[FastAPI API]
+    UI[Bilingual Web UI] --> API[FastAPI API]
     API --> O[Orchestrator]
+
+    LLM[Ollama / OpenAI] -. planning and generation .-> O
+
     O --> D[Data Agent]
     O --> A[Analysis Agent]
     O --> V[Visualization Agent]
     O --> R[RAG Agent]
-    D --> T[Validated Python tools]
+
+    D --> T[Validated Python Tools]
     A --> T
     V --> P[Plotly]
-    R --> C[(ChromaDB)]
-    D --> F[Trusted facts]
-    A --> F
-    V --> F
-    R --> F
+    R <--> C[(ChromaDB)]
+
+    T --> N[Fact Normalizer and Validator]
+    P --> N
+    C --> N
+
+    N --> F[Trusted Facts]
     F --> RP[Report Agent]
+
+    LLM -. report generation .-> RP
     RP --> UI
 ```
 
-The LLM plans tasks, while deterministic Python code performs calculations.
-Every tool call and structured response is validated before execution.
+The LLM plans tasks, while deterministic Python code performs calculations.  
+Tool calls and structured responses are validated before report generation.
 
 ## Technology stack
 
