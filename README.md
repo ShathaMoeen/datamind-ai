@@ -25,20 +25,20 @@ from PDF documents, and produce grounded analytical reports.
 ```mermaid
 flowchart TB
 
-    %% ───────────── Interface ─────────────
-    subgraph INTERFACE["Application Layer"]
-        direction LR
-        UI["Bilingual Web UI"] --> API["FastAPI API"]
-        API --> ORCH["Orchestrator"]
+    subgraph Application
+        UI[Bilingual Web UI]
+        API[FastAPI API]
+        ORCH[Orchestrator]
+
+        UI --> API
+        API --> ORCH
     end
 
-    %% ───────────── Agents ─────────────
-    subgraph AGENTS["Specialist Agent Layer"]
-        direction LR
-        DATA["Data Agent"]
-        ANALYSIS["Analysis Agent"]
-        VIS["Visualization Agent"]
-        RAG["RAG Agent"]
+    subgraph Agents
+        DATA[Data Agent]
+        ANALYSIS[Analysis Agent]
+        VIS[Visualization Agent]
+        RAG[RAG Agent]
     end
 
     ORCH --> DATA
@@ -46,12 +46,10 @@ flowchart TB
     ORCH --> VIS
     ORCH --> RAG
 
-    %% ───────────── Controlled tools ─────────────
-    subgraph TOOLS["Controlled Execution Layer"]
-        direction LR
-        PYTHON["Validated Python Tools"]
-        PLOTLY["Plotly"]
-        RETRIEVER["Retriever"]
+    subgraph Tools
+        PYTHON[Validated Python Tools]
+        PLOTLY[Plotly]
+        RETRIEVER[Retriever]
     end
 
     DATA --> PYTHON
@@ -59,14 +57,12 @@ flowchart TB
     VIS --> PLOTLY
     RAG --> RETRIEVER
 
-    %% ───────────── PDF ingestion and RAG ─────────────
-    subgraph KNOWLEDGE["Knowledge and RAG Layer"]
-        direction LR
-        PDF["PDF Documents"]
-        LOADER["Document Loader"]
-        CHUNKS["Chunking"]
-        EMBEDDINGS["Embeddings"]
-        CHROMA[("ChromaDB")]
+    subgraph Knowledge
+        PDF[PDF Documents]
+        LOADER[Document Loader]
+        CHUNKS[Chunking]
+        EMBEDDINGS[Embeddings]
+        CHROMA[(ChromaDB)]
 
         PDF --> LOADER
         LOADER --> CHUNKS
@@ -74,44 +70,41 @@ flowchart TB
         EMBEDDINGS --> CHROMA
     end
 
-    RETRIEVER <--> CHROMA
+    RETRIEVER --> CHROMA
+    CHROMA --> RETRIEVER
 
-    %% ───────────── Validation and reporting ─────────────
-    subgraph REPORTING["Validation and Reporting Layer"]
-        direction LR
-        VALIDATION["Fact Normalization<br/>and Evidence Validation"]
-        FACTS["Trusted Facts<br/>and Evidence"]
-        REPORT["Report Agent"]
+    subgraph Validation
+        NORMALIZER[Fact Normalizer]
+        FACTS[Trusted Facts and Evidence]
+        REPORT[Report Agent]
 
-        VALIDATION --> FACTS
+        NORMALIZER --> FACTS
         FACTS --> REPORT
     end
 
-    PYTHON --> VALIDATION
-    PLOTLY --> VALIDATION
-    RETRIEVER --> VALIDATION
+    PYTHON --> NORMALIZER
+    PLOTLY --> NORMALIZER
+    RETRIEVER --> NORMALIZER
 
-    REPORT --> API
-    API --> UI
-
-    %% ───────────── LLM providers ─────────────
-    subgraph AI["LLM Service"]
-        direction LR
-        OLLAMA["Ollama"]
-        OPENAI["OpenAI"]
-        LLM["Provider-independent<br/>LLM Client"]
+    subgraph LLM_Service
+        OLLAMA[Ollama]
+        OPENAI[OpenAI]
+        LLM[LLM Client]
 
         OLLAMA --> LLM
         OPENAI --> LLM
     end
 
-    ORCH -. "planning and routing" .-> LLM
-    LLM -. "structured decisions" .-> ORCH
-    REPORT -. "grounded report generation" .-> LLM
-    LLM -. "structured report" .-> REPORT
+    ORCH -.-> LLM
+    LLM -.-> ORCH
+    REPORT -.-> LLM
+    LLM -.-> REPORT
+
+    REPORT --> API
+    API --> UI
 ```
 
-The orchestrator coordinates specialized agents while validated Python tools perform deterministic calculations. PDF documents are processed, embedded, and stored in ChromaDB for evidence retrieval. All outputs pass through normalization and evidence validation before the report is generated.
+The orchestrator coordinates specialized agents, while validated Python tools perform deterministic calculations. PDF documents are processed and stored in ChromaDB for evidence retrieval. Agent outputs are normalized and validated before the final report is generated.
 
 ## Technology stack
 
