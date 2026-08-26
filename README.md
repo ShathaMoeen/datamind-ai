@@ -68,7 +68,7 @@ Tool calls and structured responses are validated before report generation.
 ### 1. Clone and create the environment
 
 ```powershell
-git clone https://github.com/YOUR_USERNAME/datamind-ai.git
+git clone https://github.com/ShathaMoeen/datamind-ai.git
 cd datamind-ai
 python -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
