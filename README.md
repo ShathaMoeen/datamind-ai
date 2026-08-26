@@ -25,20 +25,18 @@ from PDF documents, and produce grounded analytical reports.
 ```mermaid
 flowchart TB
 
-    subgraph Application
-        UI[Bilingual Web UI]
-        API[FastAPI API]
-        ORCH[Orchestrator]
-
-        UI --> API
-        API --> ORCH
+    subgraph REQUEST["1 - Request Layer"]
+        direction LR
+        UI["Bilingual Web UI"] --> API["FastAPI API"]
+        API --> ORCH["Orchestrator"]
     end
 
-    subgraph Agents
-        DATA[Data Agent]
-        ANALYSIS[Analysis Agent]
-        VIS[Visualization Agent]
-        RAG[RAG Agent]
+    subgraph AGENTS["2 - Specialist Agents"]
+        direction LR
+        DATA["Data Agent"]
+        ANALYSIS["Analysis Agent"]
+        VIS["Visualization Agent"]
+        RAG["RAG Agent"]
     end
 
     ORCH --> DATA
@@ -46,10 +44,11 @@ flowchart TB
     ORCH --> VIS
     ORCH --> RAG
 
-    subgraph Tools
-        PYTHON[Validated Python Tools]
-        PLOTLY[Plotly]
-        RETRIEVER[Retriever]
+    subgraph EXECUTION["3 - Controlled Execution"]
+        direction LR
+        PYTHON["Validated Python Tools"]
+        PLOTLY["Plotly"]
+        RETRIEVER["Document Retriever"]
     end
 
     DATA --> PYTHON
@@ -57,54 +56,61 @@ flowchart TB
     VIS --> PLOTLY
     RAG --> RETRIEVER
 
-    subgraph Knowledge
-        PDF[PDF Documents]
-        LOADER[Document Loader]
-        CHUNKS[Chunking]
-        EMBEDDINGS[Embeddings]
-        CHROMA[(ChromaDB)]
-
-        PDF --> LOADER
-        LOADER --> CHUNKS
-        CHUNKS --> EMBEDDINGS
-        EMBEDDINGS --> CHROMA
+    subgraph PIPELINE["PDF Knowledge Pipeline"]
+        direction LR
+        PDF["PDF"] --> LOADER["Loader"]
+        LOADER --> CHUNKS["Chunking"]
+        CHUNKS --> EMBEDDINGS["Embeddings"]
+        EMBEDDINGS --> CHROMA[("ChromaDB")]
     end
 
-    RETRIEVER --> CHROMA
     CHROMA --> RETRIEVER
 
-    subgraph Validation
-        NORMALIZER[Fact Normalizer]
-        FACTS[Trusted Facts and Evidence]
-        REPORT[Report Agent]
+    subgraph REPORTING["4 - Validation and Reporting"]
+        direction LR
+        VALIDATE["Fact and Evidence Validation"]
+        FACTS["Trusted Facts"]
+        REPORT["Report Agent"]
+        RESPONSE["Bilingual Result"]
 
-        NORMALIZER --> FACTS
+        VALIDATE --> FACTS
         FACTS --> REPORT
+        REPORT --> RESPONSE
     end
 
-    PYTHON --> NORMALIZER
-    PLOTLY --> NORMALIZER
-    RETRIEVER --> NORMALIZER
+    PYTHON --> VALIDATE
+    PLOTLY --> VALIDATE
+    RETRIEVER --> VALIDATE
 
-    subgraph LLM_Service
-        OLLAMA[Ollama]
-        OPENAI[OpenAI]
-        LLM[LLM Client]
+    subgraph MODELS["LLM Providers"]
+        direction LR
+        OLLAMA["Ollama"]
+        OPENAI["OpenAI"]
+        CLIENT["LLM Client"]
 
-        OLLAMA --> LLM
-        OPENAI --> LLM
+        OLLAMA --> CLIENT
+        OPENAI --> CLIENT
     end
 
-    ORCH -.-> LLM
-    LLM -.-> ORCH
-    REPORT -.-> LLM
-    LLM -.-> REPORT
+    CLIENT -.-> ORCH
+    CLIENT -.-> REPORT
 
-    REPORT --> API
-    API --> UI
+    classDef interface fill:#172554,stroke:#60a5fa,color:#ffffff
+    classDef agent fill:#312e81,stroke:#a78bfa,color:#ffffff
+    classDef tool fill:#164e63,stroke:#22d3ee,color:#ffffff
+    classDef knowledge fill:#3f3f46,stroke:#a1a1aa,color:#ffffff
+    classDef trusted fill:#14532d,stroke:#4ade80,color:#ffffff
+    classDef model fill:#581c87,stroke:#c084fc,color:#ffffff
+
+    class UI,API,ORCH,RESPONSE interface
+    class DATA,ANALYSIS,VIS,RAG agent
+    class PYTHON,PLOTLY,RETRIEVER tool
+    class PDF,LOADER,CHUNKS,EMBEDDINGS,CHROMA knowledge
+    class VALIDATE,FACTS,REPORT trusted
+    class OLLAMA,OPENAI,CLIENT model
 ```
 
-The orchestrator coordinates specialized agents, while validated Python tools perform deterministic calculations. PDF documents are processed and stored in ChromaDB for evidence retrieval. Agent outputs are normalized and validated before the final report is generated.
+The request flows through specialized agents and controlled tools. Retrieved evidence and calculated results are validated before the bilingual report is generated.
 
 ## Technology stack
 
