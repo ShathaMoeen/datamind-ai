@@ -108,6 +108,13 @@ flowchart TB
     class PDF,LOADER,CHUNKS,EMBEDDINGS,CHROMA knowledge
     class VALIDATE,FACTS,REPORT trusted
     class OLLAMA,OPENAI,CLIENT model
+
+    style REQUEST fill:transparent,stroke:#4b5563,stroke-width:1px
+    style AGENTS fill:transparent,stroke:#4b5563,stroke-width:1px
+    style EXECUTION fill:transparent,stroke:#4b5563,stroke-width:1px
+    style PIPELINE fill:transparent,stroke:#4b5563,stroke-width:1px
+    style REPORTING fill:transparent,stroke:#4b5563,stroke-width:1px
+    style MODELS fill:transparent,stroke:#4b5563,stroke-width:1px
 ```
 
 The request flows through specialized agents and controlled tools. Retrieved evidence and calculated results are validated before the bilingual report is generated.
